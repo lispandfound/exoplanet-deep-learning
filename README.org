@@ -1,0 +1,82 @@
+#+TITLE: Exoplanet Deep Learning Project
+
+This project was a research project for [[https://www.canterbury.ac.nz/courseinfo/GetCourseDetails.aspx?course=COSC440&occurrence=20S2(C)&year=2020][COSC440]], a deep learning course with a
+significant portion of the grade coming from a research project into
+astrophysics. The full report is available in the repo (report.pdf) detailing
+the findings, but the original audience for the report was someone already
+familiar with the background. This readme therefore provides an overview of the
+background and the results for anyone just passing by.
+
+* Background
+
+Exoplanets are planets orbiting a star other than our Sun. Until the 20th century it was not known exoplanets were common or instead a rarity, the answer to this question being hugely important to estimating the abundance of intelligent life in our universe (see the [[https://en.wikipedia.org/wiki/Drake_equation][Drake equation]]).
+In recent years finding exoplanets has become a lot easier due to the availability of computers powerful enough to process the data required to observe an exoplanet around a star.
+
+** Transiting Exoplanets and Stellar Lightcurves
+
+One of the "simplest" techniques for observing exoplanets has been to
+essentially watch them move in front of a star. When a planet transits across a
+star it occludes some of it's light, resulting in the overall flux to drop.
+Astronomers point telescopes (like the KEPLER or TESS space telescopes) at stars
+of interest and then observe the periodic dips in stellar flux overtime. By
+using techniques like the Box Least Squares algorithm (think Fourier analysis
+optimised for transiting planets) scientists are then able to fit an estimate of
+planetary radius (from the magnitude of the dips) and planetary orbit period. Folding the stellar light curve on itself using the estimated period one can sometimes visually observe the transiting planet (see below).
+
+[[file:HAT-P-14-orig.png]]
+
+[[https://exoplanets.nasa.gov/exoplanet-catalog/1228/hat-p-14-b/][HAT-P-14]] is a gas giant orbiting a star slightly larger than our own, and is
+about three times as massive as Jupiter. The chart above gives us an idea of the
+orbital period of HAT-P-14, the signal to noise ratio (SNR) is an indication of
+how prominent the signal is. The lower the SNR the more confident we can
+generally be about the measurements of orbital period and transit depth.
+
+** The Case for Deep Learning
+
+When observing a planetary transit, environmental noise is at play. Measurement
+error from the instruments, occluding gas, relativistic lensing effects, random
+fluctuations in stellar light output, and even comets can all make it difficult
+to observe a transit. Traditional measures to remove noise involve modelling it
+with complicated mathematical models and then removing the noise that fits the
+model. However, traditional methods do not scale well to all the different
+sources of error, and some forms of noise are going to be hard to model
+precisely. Deep learning can help us here by allowing us to train a neural
+network to remove noise automatically. In my report I attempted to do this by
+training two neural network models (a CNN and LSTM autoencoder) to take in a
+lightcurve, isolate the transiting planet, and reproduce a signal that keeps as
+much of the transit as possible whilst removing the noise.
+
+** Autoencoders
+
+The exact details of the models is out of scope for this readme, but at a high
+level both models are examples of /autoencoders/. In mathematical jargon an
+autoencoder performs dimension reduction using a learned non-linear projection
+function from the input space to a "latent space", a semantically rich
+representation. In plain English an autoencoder is best explained with a
+metaphor. Suppose somebody sets you the task of producing a copy of "The Time
+Machine" by H.G. Wells (a fantastic book by all accounts). Sounds like a rote
+copying task but there is a catch, you are not allowed to have the book in front
+of you whilst you copy it. Instead, you first begin in a featureless white room,
+with the book and a single sheet of paper in front of you. You may take as long
+as you like and write whatever you want on the paper. When you are ready you
+move to another room, where you must reconstruct the novel using only the sheet
+of paper you wrote on. In doing this process you achieve two things. You first
+will finish with a copy of a book that somewhat resembles "The Time Machine",
+and your piece of paper will contain only the most important information about
+the book's contents -- it's all you have the space for after all. In essence this
+is what an autoencoder does to achieve "dimension reduction". Autoencoders take
+in input and attempt to recreate the input using a reduced copy (what we call
+the "latent representation"). An autoencoder consists of an encoder, whose job
+it is to reduce the input to the latent space, and a decoder whose job it is to
+reconstruct the input from the latent space. In our case our autoencoders take
+in an input curve and reproduce it with a bottleneck that forces the autoencoder
+to learn to ignore the noise as noise by its random nature is hard to model with
+limited dimensions.
+
+* Results
+
+The trained deep learning models were able to remove much of the noise, and much of the report explores this. Take for example HAT-P-14, after a trained model processes the input curve we see a curve that is by comparison noise free.
+
+[[file:HAT-P-14-smooth.png]]
+
+The SNR has improved by a factor of 2, and this was not the most extreme improvement observed. Later I trained a deep learning model designed to physically model the planetary system, and by studying the latent space using traditional machine learning techniques such as decision trees and k-means clustering I was able to observe that the model did in fact learn physical properties about transiting planets.
